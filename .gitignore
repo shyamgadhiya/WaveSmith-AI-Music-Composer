@@ -1,0 +1,104 @@
+# =====================================================================
+# 1. Environment & API Secrets
+# =====================================================================
+.env
+.env*.local
+.env.production
+.env.staging
+*.env
+
+# =====================================================================
+# 2. Python & Virtual Environments
+# =====================================================================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Packaging / Distribution
+dist/
+build/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# =====================================================================
+# 3. Project Storage & Generated Media Assets
+# =====================================================================
+# Ignore generated runtime compositions but preserve directory structure
+storage/compositions/*
+!storage/compositions/.gitkeep
+
+# Root or temporary audio/MIDI artifacts
+*.wav
+*.mid
+*.midi
+*.mp3
+test_sf2_render.wav
+
+# Large SoundFont banks (>100MB exceeds GitHub push limit without Git LFS)
+soundfonts/*.sf2
+*.sf2
+!soundfonts/.gitkeep
+
+# =====================================================================
+# 4. Frontend (Next.js & Node)
+# =====================================================================
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Next.js build output
+.next/
+frontend/.next/
+out/
+frontend/out/
+
+# Next.js telemetry / bundle artifacts
+.next/cache/
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =====================================================================
+# 5. OS & Editor Specific
+# =====================================================================
+# Operating System
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Antigravity / Gemini Workspace
+.antigravity/
+.gemini/
+

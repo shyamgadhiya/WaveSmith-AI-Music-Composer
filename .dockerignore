@@ -1,0 +1,30 @@
+# Python virtual environments & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Secrets & Local Configurations
+.env
+.env*.local
+*.env
+
+# Frontend (deployed separately on Vercel)
+frontend/
+
+# Local git & cache
+.git/
+.gitignore
+.vscode/
+.idea/
+.pytest_cache/
+.coverage
+
+# Temporary media artifacts
+*.wav
+*.mid
+*.midi
+storage/compositions/*
+!storage/compositions/.gitkeep
