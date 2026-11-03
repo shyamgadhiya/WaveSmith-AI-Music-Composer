@@ -10,6 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Install essential system audio & C build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    portaudio19-dev \
     libsndfile1 \
     fluidsynth \
     curl \
@@ -32,3 +33,4 @@ EXPOSE 8000
 
 # Launch Uvicorn with dynamic Render PORT support
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
