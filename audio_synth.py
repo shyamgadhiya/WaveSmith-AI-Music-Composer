@@ -61,6 +61,7 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
                 "-n",
                 "-i",
                 "-r", "44100",
+                "-O", "s16",
                 "-F", str(output_wav_path),
                 str(soundfont),
                 str(midi_path),
@@ -88,6 +89,7 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
             seq.midi_load(str(midi_path))
 
             chunk_size = 4096
+            
             chunks = []
             max_chunks = 2000  # Safety guard (~180 seconds max)
             count = 0
@@ -110,7 +112,7 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
                 if peak > 0.001:
                     audio = (audio / peak) * 0.94
 
-                sf.write(output_wav_path, audio, 44100)
+                sf.write(output_wav_path, audio, 44100, subtype="PCM_16")
 
                 if os.path.exists(output_wav_path) and os.path.getsize(output_wav_path) > 1000:
                     print(f"[AudioSynth] Successfully rendered audio via TinySoundFont.")
@@ -164,7 +166,7 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
         if peak > 0.001:
             audio_buffer = (audio_buffer / peak) * 0.92
 
-        sf.write(output_wav_path, audio_buffer, fs)
+        sf.write(output_wav_path, audio_buffer, fs, subtype="PCM_16")
         return True
 
     except Exception as e:

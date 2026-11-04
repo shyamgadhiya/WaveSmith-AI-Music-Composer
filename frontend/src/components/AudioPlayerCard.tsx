@@ -43,8 +43,17 @@ export function AudioPlayerCard({
     setCurrentTime(0);
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.muted = isMuted;
     }
   }, [audioStreamUrl]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -52,8 +61,13 @@ export function AudioPlayerCard({
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
-      setIsPlaying(true);
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.muted = isMuted;
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch((err) => {
+        console.error("Audio playback error:", err);
+      });
     }
   };
 
@@ -104,6 +118,8 @@ export function AudioPlayerCard({
         <audio
           ref={audioRef}
           src={fullAudioUrl}
+          crossOrigin="anonymous"
+          preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onEnded={() => setIsPlaying(false)}
           onLoadedMetadata={handleTimeUpdate}
@@ -164,6 +180,16 @@ export function AudioPlayerCard({
           <span className="text-xs font-mono font-medium text-slate-500 shrink-0">
             {formatTime(currentTime)} / {formatTime(duration || targetSeconds)}
           </span>
+
+          {/* Mute/Unmute Volume Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMuted(!isMuted)}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors shrink-0"
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Right: Actions matching Screenshot (Download + Options) */}
@@ -183,7 +209,7 @@ export function AudioPlayerCard({
               <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-20 animate-in fade-in zoom-in-95">
                 {fullAudioUrl && (
                   <a
-                    href={fullAudioUrl}
+                    href={`${fullAudioUrl}${fullAudioUrl.includes("?") ? "&" : "?"}download=true`}
                     download={`composition_${sessionId.slice(0, 8)}.wav`}
                     className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                   >

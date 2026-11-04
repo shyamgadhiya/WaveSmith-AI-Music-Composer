@@ -310,13 +310,23 @@ async def download_midi(session_id: str):
 
 
 @app.get("/api/v1/download/{session_id}/audio", tags=["Download"])
-async def stream_audio(session_id: str):
+async def stream_audio(session_id: str, download: bool = False):
     file_path = STORAGE_DIR / f"{session_id}.wav"
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Audio file not found or expired.")
 
+    if download:
+        return FileResponse(
+            path=str(file_path),
+            filename=f"composition_{session_id[:8]}.wav",
+            media_type="audio/wav"
+        )
+
     return FileResponse(
         path=str(file_path),
-        filename=f"composition_{session_id[:8]}.wav",
-        media_type="audio/wav"
+        media_type="audio/wav",
+        headers={
+            "Content-Disposition": "inline",
+            "Accept-Ranges": "bytes"
+        }
     )
