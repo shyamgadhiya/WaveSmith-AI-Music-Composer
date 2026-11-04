@@ -4,24 +4,47 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 import numpy as np
 
 SOUNDFONT_PATH = os.getenv("SOUNDFONT_PATH", "soundfonts/default.sf2")
 
 
+def get_soundfont_path() -> Optional[Path]:
+    """Finds the best available SoundFont file across environment, local, and system paths."""
+    candidates = [
+        os.getenv("SOUNDFONT_PATH"),
+        "soundfonts/default.sf2",
+        "/usr/share/sounds/sf2/FluidR3_GM.sf2",
+        "/usr/share/sounds/sf2/default.sf2",
+        "/usr/share/sounds/sf2/TimGM6mb.sf2",
+        "/usr/share/soundfonts/default.sf2",
+    ]
+    for p in candidates:
+        if p:
+            candidate_path = Path(p)
+            if candidate_path.exists() and candidate_path.is_file():
+                return candidate_path
+    return None
+
+
 def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
     """
     Renders MIDI to 44.1kHz studio-grade WAV audio.
-    Priority 1: Embedded TinySoundFont DSP engine loading `default.sf2` (Real recorded acoustic samples).
-    Priority 2: Headless FluidSynth CLI binary (if installed on system PATH).
+    Priority 1: Embedded TinySoundFont DSP engine loading SoundFont samples.
+    Priority 2: Headless FluidSynth CLI binary.
     Priority 3: Harmonic timbre DSP synthesizer fallback.
     """
-    soundfont = Path(SOUNDFONT_PATH)
+    soundfont = get_soundfont_path()
+    if soundfont:
+        print(f"[AudioSynth] Using SoundFont: {soundfont}")
+    else:
+        print("[AudioSynth] Notice: No SoundFont file found. Using DSP timbre fallback.")
 
     # =========================================================================
     # Priority 1: High-Fidelity SoundFont Synthesis (TinySoundFont + default.sf2)
     # =========================================================================
-    if soundfont.exists():
+    if soundfont and soundfont.exists():
         try:
             import tinysoundfont
             import soundfile as sf
@@ -65,7 +88,7 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
     # =========================================================================
     # Priority 2: System FluidSynth CLI binary
     # =========================================================================
-    if shutil.which("fluidsynth") and soundfont.exists():
+    if shutil.which("fluidsynth") and soundfont and soundfont.exists():
         try:
             cmd = [
                 "fluidsynth",

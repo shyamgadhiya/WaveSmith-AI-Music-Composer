@@ -7,12 +7,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8000
 
-# Install essential system audio & C build dependencies
+# Install essential system audio & C build dependencies including General MIDI SoundFonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     portaudio19-dev \
     libsndfile1 \
     fluidsynth \
+    fluid-soundfont-gm \
+    timgm6mb-soundfont \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,8 +28,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application files
 COPY . .
 
-# Ensure storage directories exist
-RUN mkdir -p storage/compositions soundfonts
+# Ensure storage directories exist and symlink system SoundFont to default.sf2
+RUN mkdir -p storage/compositions soundfonts && \
+    if [ -f /usr/share/sounds/sf2/FluidR3_GM.sf2 ]; then \
+        ln -sf /usr/share/sounds/sf2/FluidR3_GM.sf2 soundfonts/default.sf2; \
+    elif [ -f /usr/share/sounds/sf2/TimGM6mb.sf2 ]; then \
+        ln -sf /usr/share/sounds/sf2/TimGM6mb.sf2 soundfonts/default.sf2; \
+    fi
 
 EXPOSE 8000
 

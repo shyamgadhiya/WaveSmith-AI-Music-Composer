@@ -28,3 +28,4 @@ frontend/
 *.midi
 storage/compositions/*
 !storage/compositions/.gitkeep
+
