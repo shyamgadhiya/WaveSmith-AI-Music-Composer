@@ -28,12 +28,16 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application files
 COPY . .
 
-# Ensure storage directories exist and symlink system SoundFont to default.sf2
+# Ensure storage directories exist and default.sf2 is available
 RUN mkdir -p storage/compositions soundfonts && \
-    if [ -f /usr/share/sounds/sf2/FluidR3_GM.sf2 ]; then \
-        ln -sf /usr/share/sounds/sf2/FluidR3_GM.sf2 soundfonts/default.sf2; \
-    elif [ -f /usr/share/sounds/sf2/TimGM6mb.sf2 ]; then \
-        ln -sf /usr/share/sounds/sf2/TimGM6mb.sf2 soundfonts/default.sf2; \
+    if [ ! -f soundfonts/default.sf2 ]; then \
+        if [ -f soundfonts/TimGM6mb.sf2 ]; then \
+            ln -sf soundfonts/TimGM6mb.sf2 soundfonts/default.sf2; \
+        elif [ -f /usr/share/sounds/sf2/TimGM6mb.sf2 ]; then \
+            ln -sf /usr/share/sounds/sf2/TimGM6mb.sf2 soundfonts/default.sf2; \
+        elif [ -f /usr/share/sounds/sf2/FluidR3_GM.sf2 ]; then \
+            ln -sf /usr/share/sounds/sf2/FluidR3_GM.sf2 soundfonts/default.sf2; \
+        fi; \
     fi
 
 EXPOSE 8000

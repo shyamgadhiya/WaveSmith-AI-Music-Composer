@@ -51,8 +51,9 @@ storage/compositions/*
 test_sf2_render.wav
 
 # Large SoundFont banks (>100MB exceeds GitHub push limit without Git LFS)
-soundfonts/*.sf2
+soundfonts/default.sf2
 *.sf2
+!soundfonts/TimGM6mb.sf2
 !soundfonts/.gitkeep
 
 # =====================================================================

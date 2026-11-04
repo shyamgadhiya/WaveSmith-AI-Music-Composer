@@ -15,9 +15,10 @@ def get_soundfont_path() -> Optional[Path]:
     candidates = [
         os.getenv("SOUNDFONT_PATH"),
         "soundfonts/default.sf2",
+        "soundfonts/TimGM6mb.sf2",
+        "/usr/share/sounds/sf2/TimGM6mb.sf2",
         "/usr/share/sounds/sf2/FluidR3_GM.sf2",
         "/usr/share/sounds/sf2/default.sf2",
-        "/usr/share/sounds/sf2/TimGM6mb.sf2",
         "/usr/share/soundfonts/default.sf2",
     ]
     for p in candidates:
@@ -25,14 +26,23 @@ def get_soundfont_path() -> Optional[Path]:
             candidate_path = Path(p)
             if candidate_path.exists() and candidate_path.is_file():
                 return candidate_path
+
+    # Automatic fallback to pretty_midi's bundled General MIDI soundfont
+    try:
+        import pretty_midi
+        pm_sf2 = Path(pretty_midi.__file__).parent / "TimGM6mb.sf2"
+        if pm_sf2.exists():
+            return pm_sf2
+    except Exception:
+        pass
     return None
 
 
 def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
     """
     Renders MIDI to 44.1kHz studio-grade WAV audio.
-    Priority 1: Embedded TinySoundFont DSP engine loading SoundFont samples.
-    Priority 2: Headless FluidSynth CLI binary.
+    Priority 1: Headless FluidSynth CLI binary (Official Linux production engine, isolated subprocess).
+    Priority 2: Embedded TinySoundFont DSP engine (Local development fallback).
     Priority 3: Harmonic timbre DSP synthesizer fallback.
     """
     soundfont = get_soundfont_path()
@@ -42,7 +52,30 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
         print("[AudioSynth] Notice: No SoundFont file found. Using DSP timbre fallback.")
 
     # =========================================================================
-    # Priority 1: High-Fidelity SoundFont Synthesis (TinySoundFont + default.sf2)
+    # Priority 1: System FluidSynth CLI binary (Linux Production Standard)
+    # =========================================================================
+    if shutil.which("fluidsynth") and soundfont and soundfont.exists():
+        try:
+            cmd = [
+                "fluidsynth",
+                "-n",
+                "-i",
+                "-r", "44100",
+                "-F", str(output_wav_path),
+                str(soundfont),
+                str(midi_path),
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=45)
+            if os.path.exists(output_wav_path) and os.path.getsize(output_wav_path) > 1000:
+                print(f"[AudioSynth] Successfully rendered audio via FluidSynth CLI.")
+                return True
+            else:
+                print(f"[Warning] FluidSynth CLI did not produce audio: {res.stderr}")
+        except Exception as e:
+            print(f"[Warning] FluidSynth CLI render error: {e}")
+
+    # =========================================================================
+    # Priority 2: Embedded TinySoundFont (Local Development Fallback)
     # =========================================================================
     if soundfont and soundfont.exists():
         try:
@@ -80,30 +113,11 @@ def render_midi_to_wav(midi_path: str, output_wav_path: str) -> bool:
                 sf.write(output_wav_path, audio, 44100)
 
                 if os.path.exists(output_wav_path) and os.path.getsize(output_wav_path) > 1000:
+                    print(f"[AudioSynth] Successfully rendered audio via TinySoundFont.")
                     return True
 
         except Exception as e:
             print(f"[Warning] SoundFont engine render error: {e}")
-
-    # =========================================================================
-    # Priority 2: System FluidSynth CLI binary
-    # =========================================================================
-    if shutil.which("fluidsynth") and soundfont and soundfont.exists():
-        try:
-            cmd = [
-                "fluidsynth",
-                "-n",
-                "-i",
-                "-r", "44100",
-                "-F", output_wav_path,
-                str(soundfont),
-                str(midi_path),
-            ]
-            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            if os.path.exists(output_wav_path) and os.path.getsize(output_wav_path) > 1000:
-                return True
-        except Exception as e:
-            print(f"[Warning] FluidSynth CLI render failed: {e}")
 
     # =========================================================================
     # Priority 3: Fallback Multi-Instrument Timbre DSP
