@@ -27,6 +27,7 @@ export function AudioPlayerCard({
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [blobAudioUrl, setBlobAudioUrl] = useState<string | null>(null);
 
   const fullAudioUrl = audioStreamUrl
     ? audioStreamUrl.startsWith("http")
@@ -41,10 +42,37 @@ export function AudioPlayerCard({
   useEffect(() => {
     setIsPlaying(false);
     setCurrentTime(0);
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
+
+    if (!fullAudioUrl) {
+      setBlobAudioUrl(null);
+      return;
     }
-  }, [audioStreamUrl]);
+
+    let isMounted = true;
+    let localBlobUrl: string | null = null;
+
+    fetch(fullAudioUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error("Audio fetch failed");
+        return res.blob();
+      })
+      .then((blob) => {
+        if (!isMounted) return;
+        localBlobUrl = URL.createObjectURL(blob);
+        setBlobAudioUrl(localBlobUrl);
+      })
+      .catch((err) => {
+        console.warn("Direct blob preload fallback:", err);
+        if (isMounted) setBlobAudioUrl(fullAudioUrl);
+      });
+
+    return () => {
+      isMounted = false;
+      if (localBlobUrl) {
+        URL.revokeObjectURL(localBlobUrl);
+      }
+    };
+  }, [fullAudioUrl]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -52,6 +80,8 @@ export function AudioPlayerCard({
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      audioRef.current.muted = false;
+      audioRef.current.volume = 1.0;
       audioRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch((err) => {
@@ -128,10 +158,10 @@ export function AudioPlayerCard({
         </button>
       </div>
 
-      {fullAudioUrl && (
+      {(blobAudioUrl || fullAudioUrl) && (
         <audio
           ref={audioRef}
-          src={fullAudioUrl}
+          src={blobAudioUrl || fullAudioUrl || undefined}
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onEnded={() => setIsPlaying(false)}
