@@ -1,6 +1,7 @@
 """Production FastAPI service for AI Music Compositor."""
 
 import os
+import shutil
 import uuid
 import time
 import json
@@ -141,7 +142,7 @@ async def stream_composition_events(prompt: str, style: str):
 
         final_midi_path = STORAGE_DIR / f"{session_id}.mid"
         final_wav_path = STORAGE_DIR / f"{session_id}.wav"
-        os.replace(temp_midi, final_midi_path)
+        shutil.move(str(temp_midi), str(final_midi_path))
 
         # Stage 4: Rendering WAV
         yield format_sse("rendering_wav", {
@@ -229,7 +230,7 @@ async def create_composition(request: ComposeRequest, background_tasks: Backgrou
     # 2. Move file to permanent storage
     final_midi_path = STORAGE_DIR / f"{session_id}.mid"
     final_wav_path = STORAGE_DIR / f"{session_id}.wav"
-    os.replace(temp_midi_path, final_midi_path)
+    shutil.move(str(temp_midi_path), str(final_midi_path))
 
     # 3. Render MIDI to WAV audio in worker thread
     has_audio = await asyncio.to_thread(
@@ -255,7 +256,7 @@ async def create_composition(request: ComposeRequest, background_tasks: Backgrou
             tempo_bpm=comp_data.get("tempo_bpm", 120),
             time_signature=comp_data.get("time_signature", "4/4"),
             melody_instrument=comp_data.get("melody_instrument", "Piano"),
-            harmony_instrument=comp_data.get("harmony_instrument", "StringInstrument"),
+            harmony_instrument=comp_data.get("harmony_instrument", "None"),
             melody=comp_data.get("melody", []),
             harmony=comp_data.get("harmony", []),
         ),
