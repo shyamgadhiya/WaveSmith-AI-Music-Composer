@@ -36,6 +36,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 
@@ -305,7 +306,10 @@ async def download_midi(session_id: str):
     return FileResponse(
         path=str(file_path),
         filename=f"composition_{session_id[:8]}.mid",
-        media_type="audio/midi"
+        media_type="audio/midi",
+        headers={
+            "Content-Disposition": f'attachment; filename="composition_{session_id[:8]}.mid"'
+        }
     )
 
 
@@ -319,7 +323,10 @@ async def stream_audio(session_id: str, download: bool = False):
         return FileResponse(
             path=str(file_path),
             filename=f"composition_{session_id[:8]}.wav",
-            media_type="audio/wav"
+            media_type="audio/wav",
+            headers={
+                "Content-Disposition": f'attachment; filename="composition_{session_id[:8]}.wav"'
+            }
         )
 
     return FileResponse(

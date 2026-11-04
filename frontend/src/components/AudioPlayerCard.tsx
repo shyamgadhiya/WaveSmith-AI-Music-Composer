@@ -83,6 +83,31 @@ export function AudioPlayerCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownload = async (url: string, filename: string) => {
+    setShowDownloadMenu(false);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Download request failed");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      const fallbackUrl = `${url}${url.includes("?") ? "&" : "?"}download=true`;
+      const link = document.createElement("a");
+      link.href = fallbackUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="wavesmith-card p-6 border border-[#EAEFF9] shadow-sm relative transition-all">
       {/* Header matching Screenshot: Recent Sessions + View All */}
@@ -186,23 +211,33 @@ export function AudioPlayerCard({
             {showDownloadMenu && (
               <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-20 animate-in fade-in zoom-in-95">
                 {fullAudioUrl && (
-                  <a
-                    href={fullAudioUrl}
-                    download={`composition_${sessionId.slice(0, 8)}.wav`}
-                    className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDownload(
+                        `${fullAudioUrl}${fullAudioUrl.includes("?") ? "&" : "?"}download=true`,
+                        `composition_${sessionId.slice(0, 8)}.wav`
+                      )
+                    }
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download WAV (Audio)</span>
-                  </a>
+                  </button>
                 )}
-                <a
-                  href={fullMidiUrl}
-                  download={`composition_${sessionId.slice(0, 8)}.mid`}
-                  className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleDownload(
+                      fullMidiUrl,
+                      `composition_${sessionId.slice(0, 8)}.mid`
+                    )
+                  }
+                  className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
                 >
                   <FileCode2 className="w-3.5 h-3.5 text-indigo-500" />
                   <span>Download MIDI</span>
-                </a>
+                </button>
               </div>
             )}
           </div>
